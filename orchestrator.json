@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "run": "/usr/local/share/dotnet/dotnet build && /Applications/Godot_mono.app/Contents/MacOS/Godot --path ."
+    "run": "./scripts/run-multiplayer.sh",
+    "run1": "/usr/local/share/dotnet/dotnet build && /Applications/Godot_mono.app/Contents/MacOS/Godot --path ."
   }
 }

@@ -18,10 +18,41 @@ Godot 4.5 C# game. Currently a hello-world scaffold with a clickable square.
 ## Structure
 
 ```
-scenes/       → .tscn scene files
-scripts/      → .cs C# scripts
-.research/    → Godot 4.5.1 source (gitignored) - read to understand engine internals
+scenes/           → .tscn scene files
+scripts/          → .cs C# scripts
+assets/game-icons → 4,200+ SVG icons (CC-BY, game-icons.net)
+.research/        → Godot 4.5.1 source (gitignored)
 ```
+
+## Prototype Visuals
+
+Hybrid approach optimized for LLM-autonomous development:
+
+**1. Programmatic drawing** for game entities (players, patients, stations):
+```csharp
+public override void _Draw()
+{
+    DrawCircle(Vector2.Zero, 16, _stateColor); // body
+    DrawCircle(Vector2.Zero, 16, Colors.Black, false, 2f); // outline
+}
+```
+
+**2. SVG icons** for semantic symbols (health, timer, station types):
+```
+assets/game-icons/lorc/health-normal.svg
+assets/game-icons/delapouite/medical-pack.svg
+assets/game-icons/lorc/hourglass.svg
+```
+
+**Finding icons:**
+```bash
+find assets/game-icons -name "*.svg" | xargs basename -a | grep -i "health\|medical"
+```
+
+**Why this approach:**
+- `_Draw()` = 100% code, dynamic state colors, easy iteration
+- SVG icons = semantic meaning, Godot rasterizes at import
+- Both are text-based, fully LLM-controllable
 
 ## Godot Source Reference
 
@@ -138,10 +169,39 @@ bd close bd-42 --reason "Completed" --json
 
 1. **Check ready work**: `bd ready` shows unblocked issues
 2. **Claim your task**: `bd update <id> --status in_progress`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
+3. **Create feature branch**: `git checkout -b <ticket-id>-short-description`
+   - Example: `git checkout -b hospital-game-mtu-player-system`
+4. **Work on it**: Implement, test, document
+5. **Discover new work?** Create linked issue:
    - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
+6. **Provide test plan**: Give user a concise test plan to verify deliverables
+7. **Wait for approval**: User MUST confirm deliverables work before closing
+8. **Complete**: Only after user approval: `bd close <id> --reason "Done"`
+9. **Merge branch**: After approval, merge to main and push
+
+### Ticket Closure Protocol
+
+**NEVER close tickets without user verification.**
+
+Before requesting closure:
+1. Ensure build passes (`dotnet build`)
+2. Provide a clear **Test Plan** with steps user can follow
+3. Wait for user to run the test plan and approve
+4. Only then close the ticket
+
+**Test Plan Format:**
+```
+## Test Plan for [ticket-id]
+
+**What was built:** Brief summary
+
+**How to test:**
+1. Step one
+2. Step two
+3. Expected result
+
+**Success criteria:** What "working" looks like
+```
 
 ### Auto-Sync
 
