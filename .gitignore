@@ -17,3 +17,12 @@ mono_crash.*.json
 
 # Research folder
 .research/
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+.vs/

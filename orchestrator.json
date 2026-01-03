@@ -1,5 +1,7 @@
 {
   "scripts": {
-    "dev": "godot --editor ."
+    "run": "godot --path .",
+    "build": "dotnet build",
+    "format": "dotnet format"
   }
 }
