@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "run": "/Applications/Godot_mono.app/Contents/MacOS/Godot --path ."
+    "run": "/usr/local/share/dotnet/dotnet build && /Applications/Godot_mono.app/Contents/MacOS/Godot --path ."
   }
 }

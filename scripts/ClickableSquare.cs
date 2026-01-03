@@ -8,17 +8,24 @@ public partial class ClickableSquare : Area2D
 
     public override void _Ready()
     {
+        GD.Print("ClickableSquare ready!");
         _colorRect = GetNode<ColorRect>("ColorRect");
         _colorRect.Color = _originalColor;
-        InputEvent += OnInputEvent;
     }
 
-    private void OnInputEvent(Node viewport, InputEvent @event, long shapeIdx)
+    public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+        if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mb)
         {
-            GD.Print("Square clicked!");
-            FlashColor();
+            var localPos = ToLocal(mb.Position);
+            var rect = new Rect2(-50, -50, 100, 100);
+
+            if (rect.HasPoint(localPos))
+            {
+                GD.Print("Square clicked!");
+                FlashColor();
+                GetViewport().SetInputAsHandled();
+            }
         }
     }
 

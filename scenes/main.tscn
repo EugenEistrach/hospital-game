@@ -9,6 +9,7 @@ size = Vector2(100, 100)
 
 [node name="ClickableSquare" type="Area2D" parent="."]
 position = Vector2(640, 360)
+input_pickable = true
 script = ExtResource("1_script")
 
 [node name="ColorRect" type="ColorRect" parent="ClickableSquare"]
@@ -16,6 +17,7 @@ offset_left = -50.0
 offset_top = -50.0
 offset_right = 50.0
 offset_bottom = 50.0
+mouse_filter = 2
 color = Color(0.2, 0.5, 0.8, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickableSquare"]
