@@ -21,6 +21,10 @@ public partial class DayManager : Node
 
     public override void _Ready()
     {
+        // Verify autoload dependencies (fail fast if order is wrong in project.godot)
+        Ensure.NotNull(GameEvents.Instance, "GameEvents.Instance");
+        Ensure.NotNull(NetworkManager.Instance, "NetworkManager.Instance");
+
         Instance = this;
         GD.Print("[DayManager] Ready");
     }

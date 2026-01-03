@@ -82,6 +82,55 @@ public partial class MyNode : Node2D
 
 Attach to nodes via scene `.tscn` files or editor.
 
+## Fail-Fast Pattern
+
+Use `Ensure` for precondition validation. Throws in ALL builds (not compiled out like `Debug.Assert`).
+
+```csharp
+// Validate dependencies at startup
+public override void _Ready()
+{
+    Ensure.NotNull(GameEvents.Instance, "GameEvents.Instance");
+    Ensure.NotNull(NetworkManager.Instance, "NetworkManager.Instance");
+    Instance = this;
+}
+
+// Validate business logic preconditions
+public void ProcessPatient(Patient patient)
+{
+    Ensure.NotNull(patient, nameof(patient));
+    Ensure.That(patient.IsAlive, "Patient must be alive");
+    Ensure.That(CurrentPhase == Phase.DayActive, "Must be in active phase");
+
+    // Flat, clean logic - preconditions guaranteed
+}
+```
+
+**Rules:**
+- Use `Ensure.That()` / `Ensure.NotNull()` for preconditions - throws `InvalidOperationException`
+- Use `ArgumentNullException.ThrowIfNull()` for public API null args
+- NO silent defensive returns (`if (x == null) return;`) - these hide bugs
+- NO `Debug.Assert` - compiled out in Release, useless in prod
+- Nullable reference types enabled (`<Nullable>enable</Nullable>`) for compile-time checks
+
+## PR Review Handling
+
+**Retrieve review comments:**
+```bash
+# Get all reviews
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews
+
+# Get line-by-line comments
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments
+```
+
+**Evaluate comments critically:**
+- Fix real bugs (logic errors, missing functionality)
+- Skip defensive null checks if autoload order guarantees initialization
+- Skip premature optimization (e.g., "update label every frame is wasteful" for 1 label)
+- Skip over-engineering suggestions for prototype code
+- Check if suggestions align with project philosophy (fail-fast, no defensive programming)
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

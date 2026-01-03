@@ -18,6 +18,11 @@ public partial class SpawnManager : Node
 
     public override void _Ready()
     {
+        // Verify autoload dependencies (fail fast if order is wrong in project.godot)
+        Ensure.NotNull(GameEvents.Instance, "GameEvents.Instance");
+        Ensure.NotNull(NetworkManager.Instance, "NetworkManager.Instance");
+        Ensure.NotNull(DayManager.Instance, "DayManager.Instance");
+
         Instance = this;
 
         // Listen for day phase changes
