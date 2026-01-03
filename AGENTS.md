@@ -82,6 +82,70 @@ public partial class MyNode : Node2D
 
 Attach to nodes via scene `.tscn` files or editor.
 
+## Fail-Fast Pattern
+
+Use `Ensure` for precondition validation. Throws in ALL builds (not compiled out like `Debug.Assert`).
+
+```csharp
+// Validate dependencies at startup
+public override void _Ready()
+{
+    Ensure.NotNull(GameEvents.Instance, "GameEvents.Instance");
+    Ensure.NotNull(NetworkManager.Instance, "NetworkManager.Instance");
+    Instance = this;
+}
+
+// Validate business logic preconditions
+public void ProcessPatient(Patient patient)
+{
+    Ensure.NotNull(patient, nameof(patient));
+    Ensure.That(patient.IsAlive, "Patient must be alive");
+    Ensure.That(CurrentPhase == Phase.DayActive, "Must be in active phase");
+
+    // Flat, clean logic - preconditions guaranteed
+}
+```
+
+**Rules:**
+- Use `Ensure.That()` / `Ensure.NotNull()` for preconditions - throws `InvalidOperationException`
+- Use `ArgumentNullException.ThrowIfNull()` for public API null args
+- NO silent defensive returns (`if (x == null) return;`) - these hide bugs
+- NO `Debug.Assert` - compiled out in Release, useless in prod
+- Nullable reference types enabled (`<Nullable>enable</Nullable>`) for compile-time checks
+
+## PR Review Handling
+
+**Retrieve review comments:**
+```bash
+# Get all reviews (summary)
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews
+
+# Get line-by-line comments (detailed)
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments
+
+# List unresolved threads only
+gh api graphql -f query='{ repository(owner: "OWNER", name: "REPO") { pullRequest(number: PR_NUMBER) { reviewThreads(first: 20) { nodes { id isResolved comments(first: 1) { nodes { path body } } } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)'
+```
+
+**Evaluate comments critically:**
+- Fix real bugs (logic errors, missing functionality)
+- Skip defensive null checks if autoload order guarantees initialization
+- Skip premature optimization (e.g., "update label every frame is wasteful" for 1 label)
+- Skip over-engineering suggestions for prototype code
+- Check if suggestions align with project philosophy (fail-fast, no defensive programming)
+
+**Resolve threads after addressing:**
+```bash
+# Resolve a single thread
+gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+
+# Resolve multiple threads
+for id in "PRRT_xxx" "PRRT_yyy"; do gh api graphql -f query="mutation { resolveReviewThread(input: {threadId: \"$id\"}) { thread { isResolved } } }"; done
+
+# Verify all resolved
+gh api graphql -f query='{ repository(owner: "OWNER", name: "REPO") { pullRequest(number: PR_NUMBER) { reviewThreads(first: 20) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[].isResolved] | {total: length, resolved: (map(select(. == true)) | length)}'
+```
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -182,7 +246,12 @@ bd close bd-42 --reason "Completed" --json
 6. **Provide test plan**: Give user a concise test plan to verify deliverables
 7. **Wait for approval**: User MUST confirm deliverables work before closing
 8. **Complete**: Only after user approval: `bd close <id> --reason "Done"`
-9. **Merge branch**: After approval, merge to main and push
+9. **Create PR**: Push branch and create PR:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --title "<description>" --body "## Summary\n- ...\n\n## Test Plan\n- ..."
+   ```
+10. **Merge branch**: After PR approval, merge to main
 
 ### Ticket Closure Protocol
 
