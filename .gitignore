@@ -26,3 +26,6 @@ obj/
 *.suo
 *.userprefs
 .vs/
+
+# Beads local state
+.beads/issues.jsonl
