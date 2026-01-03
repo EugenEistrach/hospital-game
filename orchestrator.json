@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "dev": "godot --editor ."
+  }
+}
