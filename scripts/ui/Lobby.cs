@@ -7,6 +7,8 @@ public partial class Lobby : Control
     private LineEdit _ipInput = null!;
     private Label _statusLabel = null!;
     private Button _disconnectButton = null!;
+    private Button _startDayButton = null!;
+    private Label _dayStatusLabel = null!;
 
     public override void _Ready()
     {
@@ -17,6 +19,8 @@ public partial class Lobby : Control
         _ipInput = GetNode<LineEdit>("CenterContainer/VBoxContainer/IpInput");
         _statusLabel = GetNode<Label>("CenterContainer/VBoxContainer/StatusLabel");
         _disconnectButton = GetNode<Button>("CenterContainer/VBoxContainer/DisconnectButton");
+        _startDayButton = GetNode<Button>("CenterContainer/VBoxContainer/StartDayButton");
+        _dayStatusLabel = GetNode<Label>("CenterContainer/VBoxContainer/DayStatusLabel");
 
         GD.Print($"[Lobby] Nodes found - Host: {_hostButton != null}, Join: {_joinButton != null}");
         GD.Print($"[Lobby] HostButton.Disabled = {_hostButton?.Disabled}");
@@ -36,7 +40,27 @@ public partial class Lobby : Control
             GD.PrintErr("[Lobby] NetworkManager.Instance is NULL!");
         }
 
+        // Connect to GameEvents signals
+        if (GameEvents.Instance != null)
+        {
+            GameEvents.Instance.DayStarted += OnDayStarted;
+            GameEvents.Instance.DayEnded += OnDayEnded;
+            GameEvents.Instance.DayPhaseChanged += OnDayPhaseChanged;
+            GameEvents.Instance.PatientArrived += OnPatientArrived;
+        }
+
         GD.Print("[Lobby] _Ready complete");
+    }
+
+    public override void _Process(double delta)
+    {
+        // Update day status display
+        if (DayManager.Instance != null && DayManager.Instance.CurrentDay > 0)
+        {
+            var phase = DayManager.Instance.CurrentPhase;
+            var time = DayManager.Instance.PhaseTimeRemaining;
+            _dayStatusLabel.Text = $"Day {DayManager.Instance.CurrentDay} - {phase} ({time:F1}s)";
+        }
     }
 
     // Connected via .tscn [connection]
@@ -123,6 +147,8 @@ public partial class Lobby : Control
     {
         GD.Print("[Lobby] OnServerStarted");
         SetStatus("Server started, waiting for player...", Colors.Yellow);
+        _startDayButton.Visible = true;
+        _startDayButton.Text = "Start Day 1";
     }
 
     private void SetStatus(string text, Color color)
@@ -130,5 +156,46 @@ public partial class Lobby : Control
         GD.Print($"[Lobby] Status: {text}");
         _statusLabel.Text = text;
         _statusLabel.Modulate = color;
+    }
+
+    // Connected via .tscn [connection]
+    private void OnStartDayPressed()
+    {
+        GD.Print("[Lobby] OnStartDayPressed called");
+        if (NetworkManager.Instance.IsServer)
+        {
+            DayManager.Instance.StartDay();
+            _startDayButton.Visible = false;
+        }
+    }
+
+    private void OnDayStarted(int dayNumber)
+    {
+        GD.Print($"[Lobby] Day {dayNumber} started!");
+        _startDayButton.Visible = false;
+    }
+
+    private void OnDayEnded(int dayNumber)
+    {
+        GD.Print($"[Lobby] Day {dayNumber} ended!");
+        _dayStatusLabel.Text = $"Day {dayNumber} complete!";
+
+        // Show start day button for next day (server only)
+        if (NetworkManager.Instance.IsServer)
+        {
+            _startDayButton.Visible = true;
+            _startDayButton.Text = $"Start Day {dayNumber + 1}";
+        }
+    }
+
+    private void OnDayPhaseChanged(int phase)
+    {
+        var phaseName = (DayManager.Phase)phase;
+        GD.Print($"[Lobby] Phase changed to: {phaseName}");
+    }
+
+    private void OnPatientArrived(int patientId)
+    {
+        GD.Print($"[Lobby] Patient {patientId} arrived!");
     }
 }
