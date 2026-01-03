@@ -5,69 +5,41 @@ public partial class Player : CharacterBody2D
     [Export] public float Speed = 300f;
     [Export] public int PlayerIndex = 0;
 
-    // Colors for player 1 (green) and player 2 (blue)
     private static readonly Color[] PlayerColors = {
-        new(0.2f, 0.7f, 0.3f),
-        new(0.3f, 0.4f, 0.8f)
+        new(0.2f, 0.7f, 0.3f), // green
+        new(0.3f, 0.4f, 0.8f)  // blue
     };
 
-    private Color _color = new(0.5f, 0.5f, 0.5f); // default gray if not set
-    private bool _loggedFirstProcess = false;
-
-    // Spawn points - must match Game.cs
     private static readonly Vector2[] SpawnPoints = {
         new(200, 300),
         new(200, 500)
     };
 
+    private Color _color;
+
     public override void _Ready()
     {
-        var myId = Multiplayer.GetUniqueId();
-
         // Parse peer ID from node name (format: "Player_<peerId>")
-        // This ensures authority is correct on both server AND replicated clients
         var nameParts = Name.ToString().Split('_');
-        if (nameParts.Length >= 2 && long.TryParse(nameParts[1], out var peerId))
-        {
-            SetMultiplayerAuthority((int)peerId);
-            PlayerIndex = peerId == 1 ? 0 : 1;
-            GameLogger.Log("Player", $"Parsed name | PeerId={peerId} | Index={PlayerIndex}");
-        }
-        else
-        {
-            GameLogger.Log("Player", $"WARN: Could not parse name '{Name}'");
-        }
+        Ensure.That(nameParts.Length >= 2, $"Player name must be 'Player_<peerId>', got '{Name}'");
+        Ensure.That(long.TryParse(nameParts[1], out var peerId), $"Could not parse peer ID from '{Name}'");
 
-        _color = PlayerColors[PlayerIndex % PlayerColors.Length];
+        SetMultiplayerAuthority((int)peerId);
+        PlayerIndex = peerId == 1 ? 0 : 1;
+        _color = PlayerColors[PlayerIndex];
 
-        // Set spawn position (critical for replicated nodes that don't have position set by server)
-        // Only set if we're near origin (not already positioned)
+        // Set spawn position for replicated nodes (server sets before AddChild, but replicated nodes need this)
         if (Position.LengthSquared() < 100)
         {
             Position = SpawnPoints[PlayerIndex];
-            GameLogger.Log("Player", $"Set spawn position | Pos={Position}");
         }
 
-        var isOurs = IsMultiplayerAuthority();
-        GameLogger.Log("Player", $"Ready | Name={Name} | Index={PlayerIndex} | MyId={myId} | Authority={GetMultiplayerAuthority()} | IsOurs={isOurs} | Pos={Position}");
-
-        // Force redraw with correct color
+        GameLogger.Log("Player", $"Ready | Name={Name} | Index={PlayerIndex} | Authority={peerId} | IsOurs={IsMultiplayerAuthority()}");
         QueueRedraw();
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        // Log first physics process to debug authority
-        if (!_loggedFirstProcess)
-        {
-            _loggedFirstProcess = true;
-            var myId = Multiplayer.GetUniqueId();
-            var auth = GetMultiplayerAuthority();
-            var isOurs = IsMultiplayerAuthority();
-            GameLogger.Log("Player", $"FirstProcess | Name={Name} | MyId={myId} | Auth={auth} | IsOurs={isOurs}");
-        }
-
-        // Only process input if this is our player (authority check for multiplayer)
         if (!IsMultiplayerAuthority())
             return;
 
@@ -91,18 +63,8 @@ public partial class Player : CharacterBody2D
 
     public override void _Draw()
     {
-        // Body circle
         DrawCircle(Vector2.Zero, 20, _color);
-        // Outline
         DrawArc(Vector2.Zero, 20, 0, Mathf.Tau, 32, Colors.Black, 2f);
-        // Direction indicator (small circle at front)
-        DrawCircle(new Vector2(12, 0), 5, Colors.White);
-    }
-
-    public void SetPlayerIndex(int index)
-    {
-        PlayerIndex = index;
-        _color = PlayerColors[index % PlayerColors.Length];
-        QueueRedraw();
+        DrawCircle(new Vector2(12, 0), 5, Colors.White); // direction indicator
     }
 }

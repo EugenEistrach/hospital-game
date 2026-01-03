@@ -13,7 +13,7 @@ public partial class Lobby : Control
 
     public override void _Ready()
     {
-        GD.Print("[Lobby] _Ready called");
+        Ensure.NotNull(NetworkManager.Instance, "NetworkManager.Instance");
 
         _hostButton = GetNode<Button>("CenterContainer/VBoxContainer/HBoxContainer/HostButton");
         _joinButton = GetNode<Button>("CenterContainer/VBoxContainer/HBoxContainer/JoinButton");
@@ -22,31 +22,17 @@ public partial class Lobby : Control
         _disconnectButton = GetNode<Button>("CenterContainer/VBoxContainer/DisconnectButton");
         _startGameButton = GetNode<Button>("CenterContainer/VBoxContainer/StartGameButton");
 
-        GD.Print($"[Lobby] Nodes found - Host: {_hostButton != null}, Join: {_joinButton != null}");
-        GD.Print($"[Lobby] HostButton.Disabled = {_hostButton?.Disabled}");
+        NetworkManager.Instance.PlayerConnected += OnPlayerConnected;
+        NetworkManager.Instance.PlayerDisconnected += OnPlayerDisconnected;
+        NetworkManager.Instance.ConnectionSucceeded += OnConnectionSucceeded;
+        NetworkManager.Instance.ConnectionFailed += OnConnectionFailed;
+        NetworkManager.Instance.ServerStarted += OnServerStarted;
 
-        // Connect to NetworkManager signals
-        if (NetworkManager.Instance != null)
-        {
-            GD.Print("[Lobby] NetworkManager.Instance is available");
-            NetworkManager.Instance.PlayerConnected += OnPlayerConnected;
-            NetworkManager.Instance.PlayerDisconnected += OnPlayerDisconnected;
-            NetworkManager.Instance.ConnectionSucceeded += OnConnectionSucceeded;
-            NetworkManager.Instance.ConnectionFailed += OnConnectionFailed;
-            NetworkManager.Instance.ServerStarted += OnServerStarted;
-        }
-        else
-        {
-            GD.PrintErr("[Lobby] NetworkManager.Instance is NULL!");
-        }
-
-        GD.Print("[Lobby] _Ready complete");
+        GD.Print("[Lobby] Ready");
     }
 
-    // Connected via .tscn [connection]
     private void OnHostPressed()
     {
-        GD.Print("[Lobby] OnHostPressed called");
         var error = NetworkManager.Instance.HostGame();
         if (error == Error.Ok)
         {
@@ -60,10 +46,8 @@ public partial class Lobby : Control
         }
     }
 
-    // Connected via .tscn [connection]
     private void OnJoinPressed()
     {
-        GD.Print("[Lobby] OnJoinPressed called");
         var ip = _ipInput.Text.Trim();
         if (string.IsNullOrEmpty(ip))
             ip = "127.0.0.1";
@@ -81,39 +65,35 @@ public partial class Lobby : Control
         }
     }
 
-    // Connected via .tscn [connection]
     private void OnDisconnectPressed()
     {
-        GD.Print("[Lobby] OnDisconnectPressed called");
         NetworkManager.Instance.Disconnect();
         SetStatus("Disconnected", Colors.White);
         _hostButton.Disabled = false;
         _joinButton.Disabled = false;
         _disconnectButton.Visible = false;
+        _startGameButton.Visible = false;
+        _connectedPlayers = 0;
     }
 
     private void OnPlayerConnected(long id)
     {
-        GD.Print($"[Lobby] OnPlayerConnected: {id}");
+        GD.Print($"[Lobby] Player connected: {id}");
         _connectedPlayers++;
 
         if (NetworkManager.Instance.IsServer)
         {
-            SetStatus($"Player {id} joined! ({_connectedPlayers}/2 players)", Colors.Green);
-            // Show start button when we have 2 players (host counts as 1)
-            if (_connectedPlayers >= 1) // 1 connected peer + host = 2 players
-            {
-                _startGameButton.Visible = true;
-            }
+            SetStatus($"Player {id} joined! ({_connectedPlayers + 1}/2 players)", Colors.Green);
+            _startGameButton.Visible = true;
         }
         _disconnectButton.Visible = true;
     }
 
     private void OnPlayerDisconnected(long id)
     {
-        GD.Print($"[Lobby] OnPlayerDisconnected: {id}");
+        GD.Print($"[Lobby] Player disconnected: {id}");
         _connectedPlayers--;
-        SetStatus($"Player {id} left ({_connectedPlayers}/2 players)", Colors.Orange);
+        SetStatus($"Player {id} left ({_connectedPlayers + 1}/2 players)", Colors.Orange);
 
         if (_connectedPlayers < 1)
         {
@@ -121,30 +101,29 @@ public partial class Lobby : Control
         }
     }
 
-    // Connected via .tscn [connection]
     private void OnStartGamePressed()
     {
-        GD.Print("[Lobby] OnStartGamePressed - host starting game");
+        GD.Print("[Lobby] Starting game...");
         Rpc(MethodName.LoadGameScene);
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true)]
     private void LoadGameScene()
     {
-        GD.Print("[Lobby] Loading game scene...");
+        GD.Print("[Lobby] Loading game scene");
         GetTree().ChangeSceneToFile("res://scenes/Game.tscn");
     }
 
     private void OnConnectionSucceeded()
     {
-        GD.Print("[Lobby] OnConnectionSucceeded");
-        SetStatus("Connected to server!", Colors.Green);
+        GD.Print("[Lobby] Connected to server");
+        SetStatus("Connected! Waiting for host to start...", Colors.Green);
         _disconnectButton.Visible = true;
     }
 
     private void OnConnectionFailed()
     {
-        GD.Print("[Lobby] OnConnectionFailed");
+        GD.Print("[Lobby] Connection failed");
         SetStatus("Connection failed!", Colors.Red);
         _hostButton.Disabled = false;
         _joinButton.Disabled = false;
@@ -152,13 +131,12 @@ public partial class Lobby : Control
 
     private void OnServerStarted()
     {
-        GD.Print("[Lobby] OnServerStarted");
+        GD.Print("[Lobby] Server started");
         SetStatus("Server started, waiting for player...", Colors.Yellow);
     }
 
     private void SetStatus(string text, Color color)
     {
-        GD.Print($"[Lobby] Status: {text}");
         _statusLabel.Text = text;
         _statusLabel.Modulate = color;
     }
