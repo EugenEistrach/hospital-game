@@ -165,12 +165,17 @@ bd close bd-42 --reason "Completed" --json
 - `3` - Low (polish, optimization)
 - `4` - Backlog (future ideas)
 
-### Workflow for AI Agents
+### PROJECT-SPECIFIC WORKFLOW (MANDATORY)
+
+> **CRITICAL: This workflow OVERRIDES the default bd workflow.**
+> **This is the AUTHORITATIVE workflow for this project. Follow it EXACTLY.**
+> **If the default bd docs conflict with this section, THIS SECTION WINS.**
 
 1. **Check ready work**: `bd ready` shows unblocked issues
 2. **Claim your task**: `bd update <id> --status in_progress`
-3. **Create feature branch**: `git checkout -b <ticket-id>-short-description`
-   - Example: `git checkout -b hospital-game-mtu-player-system`
+3. **Create feature branch**: `git checkout -b feat/<description>`
+   - Example: `git checkout -b feat/player-system`
+   - **DO NOT use ticket IDs in branch names**
 4. **Work on it**: Implement, test, document
 5. **Discover new work?** Create linked issue:
    - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
