@@ -1,7 +1,5 @@
 {
   "scripts": {
-    "run": "godot --path .",
-    "build": "dotnet build",
-    "format": "dotnet format"
+    "run": "/Applications/Godot_mono.app/Contents/MacOS/Godot --path ."
   }
 }

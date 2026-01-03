@@ -1,25 +1,24 @@
 # Hospital Game - Agent Guide
 
-## Quick Reference
+## Commands
 
-| Task | Command |
-|------|---------|
-| Run game | `godot --path .` |
-| Build C# | `dotnet build` |
-| Format code | `dotnet format` |
+```bash
+# Run game
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path .
 
-## Project Structure
+# Build C#
+/usr/local/share/dotnet/dotnet build
+
+# Format code
+/usr/local/share/dotnet/dotnet format
+```
+
+## Structure
 
 ```
 scenes/     → .tscn scene files
 scripts/    → .cs C# scripts
 ```
-
-## Key Files
-
-- `project.godot` - Godot config (main scene: `scenes/main.tscn`)
-- `HospitalGame.csproj` - .NET 8 project
-- `orchestrator.json` - Dev scripts
 
 ## C# Script Pattern
 
@@ -34,11 +33,3 @@ public partial class MyNode : Node2D
 ```
 
 Attach to nodes via scene `.tscn` files or editor.
-
-## Godot CLI
-
-```bash
-godot --path .                    # Run game
-godot --editor .                  # Open editor
-godot --headless --build-solutions --quit  # CI build
-```
