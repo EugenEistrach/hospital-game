@@ -182,7 +182,12 @@ bd close bd-42 --reason "Completed" --json
 6. **Provide test plan**: Give user a concise test plan to verify deliverables
 7. **Wait for approval**: User MUST confirm deliverables work before closing
 8. **Complete**: Only after user approval: `bd close <id> --reason "Done"`
-9. **Merge branch**: After approval, merge to main and push
+9. **Create PR**: Push branch and create PR:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --title "<description>" --body "## Summary\n- ...\n\n## Test Plan\n- ..."
+   ```
+10. **Merge branch**: After PR approval, merge to main
 
 ### Ticket Closure Protocol
 
