@@ -9,6 +9,11 @@ PROJECT_PATH="$(cd "$(dirname "$0")/.." && pwd)"
 echo "Building C#..."
 /usr/local/share/dotnet/dotnet build "$PROJECT_PATH" || exit 1
 
+# Clear old logs
+echo "Clearing logs..."
+rm -rf "$PROJECT_PATH/logs"
+mkdir -p "$PROJECT_PATH/logs"
+
 # Kill existing session if any
 tmux kill-session -t "$SESSION" 2>/dev/null
 

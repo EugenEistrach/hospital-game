@@ -62,6 +62,14 @@ layout_mode = 2
 visible = false
 text = "Disconnect"
 
+[node name="StartGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+text = "Start Game"
+
 [connection signal="pressed" from="CenterContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="OnHostPressed"]
 [connection signal="pressed" from="CenterContainer/VBoxContainer/HBoxContainer/JoinButton" to="." method="OnJoinPressed"]
 [connection signal="pressed" from="CenterContainer/VBoxContainer/DisconnectButton" to="." method="OnDisconnectPressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/StartGameButton" to="." method="OnStartGamePressed"]

@@ -7,6 +7,9 @@ public partial class Lobby : Control
     private LineEdit _ipInput = null!;
     private Label _statusLabel = null!;
     private Button _disconnectButton = null!;
+    private Button _startGameButton = null!;
+
+    private int _connectedPlayers = 0;
 
     public override void _Ready()
     {
@@ -17,6 +20,7 @@ public partial class Lobby : Control
         _ipInput = GetNode<LineEdit>("CenterContainer/VBoxContainer/IpInput");
         _statusLabel = GetNode<Label>("CenterContainer/VBoxContainer/StatusLabel");
         _disconnectButton = GetNode<Button>("CenterContainer/VBoxContainer/DisconnectButton");
+        _startGameButton = GetNode<Button>("CenterContainer/VBoxContainer/StartGameButton");
 
         GD.Print($"[Lobby] Nodes found - Host: {_hostButton != null}, Join: {_joinButton != null}");
         GD.Print($"[Lobby] HostButton.Disabled = {_hostButton?.Disabled}");
@@ -91,9 +95,16 @@ public partial class Lobby : Control
     private void OnPlayerConnected(long id)
     {
         GD.Print($"[Lobby] OnPlayerConnected: {id}");
+        _connectedPlayers++;
+
         if (NetworkManager.Instance.IsServer)
         {
-            SetStatus($"Player {id} joined! Game ready.", Colors.Green);
+            SetStatus($"Player {id} joined! ({_connectedPlayers}/2 players)", Colors.Green);
+            // Show start button when we have 2 players (host counts as 1)
+            if (_connectedPlayers >= 1) // 1 connected peer + host = 2 players
+            {
+                _startGameButton.Visible = true;
+            }
         }
         _disconnectButton.Visible = true;
     }
@@ -101,7 +112,27 @@ public partial class Lobby : Control
     private void OnPlayerDisconnected(long id)
     {
         GD.Print($"[Lobby] OnPlayerDisconnected: {id}");
-        SetStatus($"Player {id} left", Colors.Orange);
+        _connectedPlayers--;
+        SetStatus($"Player {id} left ({_connectedPlayers}/2 players)", Colors.Orange);
+
+        if (_connectedPlayers < 1)
+        {
+            _startGameButton.Visible = false;
+        }
+    }
+
+    // Connected via .tscn [connection]
+    private void OnStartGamePressed()
+    {
+        GD.Print("[Lobby] OnStartGamePressed - host starting game");
+        Rpc(MethodName.LoadGameScene);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true)]
+    private void LoadGameScene()
+    {
+        GD.Print("[Lobby] Loading game scene...");
+        GetTree().ChangeSceneToFile("res://scenes/Game.tscn");
     }
 
     private void OnConnectionSucceeded()

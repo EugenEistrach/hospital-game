@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameLogger="*res://scripts/autoload/GameLogger.cs"
 NetworkManager="*res://scripts/autoload/NetworkManager.cs"
 
 [display]
