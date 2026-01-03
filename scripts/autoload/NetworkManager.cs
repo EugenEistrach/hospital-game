@@ -21,8 +21,8 @@ public partial class NetworkManager : Node
 
     public override void _Ready()
     {
-        GD.Print("[NetworkManager] _Ready called - setting Instance");
         Instance = this;
+        GameLogger.Log("NetworkManager", "_Ready");
 
         Multiplayer.PeerConnected += OnPeerConnected;
         Multiplayer.PeerDisconnected += OnPeerDisconnected;
@@ -33,17 +33,20 @@ public partial class NetworkManager : Node
 
     public Error HostGame(int port = DefaultPort)
     {
+        // Note: run-multiplayer.sh clears logs before starting both instances
+        GameLogger.SetRole("host", 1);
+
         _peer = new ENetMultiplayerPeer();
         var error = _peer.CreateServer(port, MaxPlayers);
 
         if (error != Error.Ok)
         {
-            GD.PrintErr($"Failed to create server: {error}");
+            GameLogger.Log("NetworkManager", $"HostGame FAILED | Error={error}");
             return error;
         }
 
         Multiplayer.MultiplayerPeer = _peer;
-        GD.Print($"Server started on port {port}");
+        GameLogger.Log("NetworkManager", $"HostGame OK | Port={port} | MyId={Multiplayer.GetUniqueId()}");
         EmitSignal(SignalName.ServerStarted);
         return Error.Ok;
     }
@@ -55,12 +58,12 @@ public partial class NetworkManager : Node
 
         if (error != Error.Ok)
         {
-            GD.PrintErr($"Failed to create client: {error}");
+            GameLogger.Log("NetworkManager", $"JoinGame FAILED | Error={error}");
             return error;
         }
 
         Multiplayer.MultiplayerPeer = _peer;
-        GD.Print($"Connecting to {address}:{port}...");
+        GameLogger.Log("NetworkManager", $"JoinGame connecting | Address={address}:{port}");
         return Error.Ok;
     }
 
@@ -77,25 +80,27 @@ public partial class NetworkManager : Node
 
     private void OnPeerConnected(long id)
     {
-        GD.Print($"Player connected: {id}");
+        GameLogger.Log("NetworkManager", $"PeerConnected | PeerId={id}");
         EmitSignal(SignalName.PlayerConnected, id);
     }
 
     private void OnPeerDisconnected(long id)
     {
-        GD.Print($"Player disconnected: {id}");
+        GameLogger.Log("NetworkManager", $"PeerDisconnected | PeerId={id}");
         EmitSignal(SignalName.PlayerDisconnected, id);
     }
 
     private void OnConnectedToServer()
     {
-        GD.Print("Connected to server!");
+        var myId = Multiplayer.GetUniqueId();
+        GameLogger.SetRole("client", myId);
+        GameLogger.Log("NetworkManager", $"ConnectedToServer | MyId={myId}");
         EmitSignal(SignalName.ConnectionSucceeded);
     }
 
     private void OnConnectionFailed()
     {
-        GD.Print("Connection failed!");
+        GameLogger.Log("NetworkManager", "ConnectionFailed");
         Multiplayer.MultiplayerPeer = null;
         _peer = null;
         EmitSignal(SignalName.ConnectionFailed);
@@ -103,7 +108,7 @@ public partial class NetworkManager : Node
 
     private void OnServerDisconnected()
     {
-        GD.Print("Server disconnected!");
+        GameLogger.Log("NetworkManager", "ServerDisconnected");
         Multiplayer.MultiplayerPeer = null;
         _peer = null;
     }

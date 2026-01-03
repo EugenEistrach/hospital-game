@@ -62,19 +62,14 @@ layout_mode = 2
 visible = false
 text = "Disconnect"
 
-[node name="StartDayButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 40)
+[node name="StartGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 visible = false
-text = "Start Day"
-
-[node name="DayStatusLabel" type="Label" parent="CenterContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = ""
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+text = "Start Game"
 
 [connection signal="pressed" from="CenterContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="OnHostPressed"]
 [connection signal="pressed" from="CenterContainer/VBoxContainer/HBoxContainer/JoinButton" to="." method="OnJoinPressed"]
 [connection signal="pressed" from="CenterContainer/VBoxContainer/DisconnectButton" to="." method="OnDisconnectPressed"]
-[connection signal="pressed" from="CenterContainer/VBoxContainer/StartDayButton" to="." method="OnStartDayPressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/StartGameButton" to="." method="OnStartGamePressed"]

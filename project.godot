@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameEvents="*res://scripts/autoload/GameEvents.cs"
+GameLogger="*res://scripts/autoload/GameLogger.cs"
 NetworkManager="*res://scripts/autoload/NetworkManager.cs"
 DayManager="*res://scripts/autoload/DayManager.cs"
 SpawnManager="*res://scripts/autoload/SpawnManager.cs"

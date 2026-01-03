@@ -29,3 +29,6 @@ obj/
 
 # Beads local state
 .beads/issues.jsonl
+
+# Game logs
+logs/
