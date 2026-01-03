@@ -117,11 +117,14 @@ public void ProcessPatient(Patient patient)
 
 **Retrieve review comments:**
 ```bash
-# Get all reviews
+# Get all reviews (summary)
 gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews
 
-# Get line-by-line comments
+# Get line-by-line comments (detailed)
 gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments
+
+# List unresolved threads only
+gh api graphql -f query='{ repository(owner: "OWNER", name: "REPO") { pullRequest(number: PR_NUMBER) { reviewThreads(first: 20) { nodes { id isResolved comments(first: 1) { nodes { path body } } } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)'
 ```
 
 **Evaluate comments critically:**
@@ -130,6 +133,18 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments
 - Skip premature optimization (e.g., "update label every frame is wasteful" for 1 label)
 - Skip over-engineering suggestions for prototype code
 - Check if suggestions align with project philosophy (fail-fast, no defensive programming)
+
+**Resolve threads after addressing:**
+```bash
+# Resolve a single thread
+gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+
+# Resolve multiple threads
+for id in "PRRT_xxx" "PRRT_yyy"; do gh api graphql -f query="mutation { resolveReviewThread(input: {threadId: \"$id\"}) { thread { isResolved } } }"; done
+
+# Verify all resolved
+gh api graphql -f query='{ repository(owner: "OWNER", name: "REPO") { pullRequest(number: PR_NUMBER) { reviewThreads(first: 20) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[].isResolved] | {total: length, resolved: (map(select(. == true)) | length)}'
+```
 
 ## Landing the Plane (Session Completion)
 

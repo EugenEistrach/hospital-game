@@ -115,20 +115,25 @@ public partial class DayManager : Node
     {
         var oldPhase = CurrentPhase;
         var oldDay = CurrentDay;
+        var wasInProgress = _dayInProgress;
 
         CurrentDay = day;
         CurrentPhase = (Phase)phase;
         PhaseTimeRemaining = timeRemaining;
         _dayInProgress = CurrentPhase != Phase.DayComplete || timeRemaining > 0;
 
-        // Emit signals so client-side listeners react
+        // Emit signals so client-side listeners react (same order as server: Phase -> Start -> End)
+        if (oldPhase != CurrentPhase)
+        {
+            GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayPhaseChanged, phase);
+        }
         if (oldDay != day && CurrentPhase == Phase.Preparation)
         {
             GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayStarted, day);
         }
-        if (oldPhase != CurrentPhase)
+        if (wasInProgress && !_dayInProgress)
         {
-            GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayPhaseChanged, phase);
+            GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayEnded, day);
         }
 
         GD.Print($"[DayManager] Client synced: Day {day}, Phase {(Phase)phase}, Time {timeRemaining:F1}s");
