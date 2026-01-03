@@ -109,10 +109,23 @@ public partial class DayManager : Node
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = false)]
     private void ClientReceiveDayState(int day, int phase, float timeRemaining)
     {
+        var oldPhase = CurrentPhase;
+        var oldDay = CurrentDay;
+
         CurrentDay = day;
         CurrentPhase = (Phase)phase;
         PhaseTimeRemaining = timeRemaining;
         _dayInProgress = CurrentPhase != Phase.DayComplete || timeRemaining > 0;
+
+        // Emit signals so client-side listeners react
+        if (oldDay != day && CurrentPhase == Phase.Preparation)
+        {
+            GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayStarted, day);
+        }
+        if (oldPhase != CurrentPhase)
+        {
+            GameEvents.Instance?.EmitSignal(GameEvents.SignalName.DayPhaseChanged, phase);
+        }
 
         GD.Print($"[DayManager] Client synced: Day {day}, Phase {(Phase)phase}, Time {timeRemaining:F1}s");
     }
